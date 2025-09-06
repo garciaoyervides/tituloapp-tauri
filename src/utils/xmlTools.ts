@@ -2,6 +2,40 @@
 import { ResponsibleType, SchoolType, StudentType } from '../types';
 import { getXMLfromJSON, signOriginalChain} from '../api';
 
+interface NestedObject {
+  [key: string]: any;
+}
+
+
+function cleanDollarObject(obj: NestedObject): NestedObject {
+  if (obj.$) {
+    obj.$ = Object.fromEntries(
+      Object.entries(obj.$).filter(([_key, value]) => {
+        return value !== undefined && (typeof value !== 'string' || value.trim() !== '');
+      })
+    );
+  }
+  return obj;
+}
+
+function recursiveClean(obj: any): any {
+  if (typeof obj !== 'object' || obj === null) {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(recursiveClean);
+  }
+
+  for (const key in obj) {
+    if (Object.hasOwn(obj, key)) {
+      obj[key] = recursiveClean(obj[key]);
+    }
+  }
+
+  return cleanDollarObject(obj);
+}
+
 export const getXMLinJSON = (student: StudentType, school:SchoolType, responsibles: ResponsibleType[], signatures:string[]) =>{
     const xmlVersion ="1.0"
     //const xmlVersion =""
@@ -68,7 +102,6 @@ export const getXMLinJSON = (student: StudentType, school:SchoolType, responsibl
             }
         })
     });
-
      const jsObj={
         "TituloElectronico":{
             "$":{
@@ -133,7 +166,8 @@ export const getXMLinJSON = (student: StudentType, school:SchoolType, responsibl
             },
         }
     }
-    return JSON.stringify(jsObj);
+    const cleanedJsObj = recursiveClean(jsObj);
+    return JSON.stringify(cleanedJsObj);
     //const xml= '<?xml version="1.0" encoding="utf-8"?>' + convert.json2xml(JSON.stringify(jsObj));
     //return format(xml)
 

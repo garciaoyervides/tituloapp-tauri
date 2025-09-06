@@ -235,9 +235,8 @@ function Students (){
         setIsLoading(true);
         try{
             const xmlData = await getXML(student, school, responsibles);
-            console.log(xmlData);
-            const estatusTracking = await sendTitle(school.cuenta,school.password,student.recibo,Number(school.claveInstitucion),student.cadenaFirmada,student.recibo);
-            console.log(estatusTracking);
+            const xmlDataBase64 = btoa(unescape(encodeURIComponent(xmlData)));
+            const estatusTracking = await sendTitle(school.cuenta,school.password,student.recibo,Number(school.claveInstitucion),xmlDataBase64,`${student.folio}.xml`);
             await editStudentStatus(Number(student.id),estatusTracking).then(
                     ()=>getStudent(Number(student.id)).then(currStudent => setStudent(currStudent)));
         }finally{
